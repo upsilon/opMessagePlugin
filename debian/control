@@ -1,0 +1,15 @@
+Source: openpne3-message
+Section: web
+Priority: optional
+Maintainer: Kimura Youichi <kim.upsilon@bucyou.net>
+Build-Depends: debhelper (>= 7.0.50)
+Standards-Version: 3.8.0
+Homepage: http://www.openpne.jp/
+Vcs-Git: git://github.com/upsilon/opMessagePlugin.git
+Vcs-Browser: http://github.com/upsilon/opMessagePlugin
+
+Package: openpne3-message
+Architecture: all
+Depends: ${misc:Depends}, openpne3
+Description: plugin for OpenPNE3 -- opMessagePlugin
+
