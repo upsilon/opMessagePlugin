@@ -34,8 +34,8 @@ $(function() {
           $('#no-message').hide();
         }
       },
-      error: function(e) {
-        console.log(e);
+      error: function(jqXHR, textStatus, errorThrown) {
+        alert(jqXHR.responseText);
       },
       complete: function() {
         $('#submit-message').val('');
