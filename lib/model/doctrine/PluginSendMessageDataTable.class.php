@@ -201,33 +201,25 @@ class PluginSendMessageDataTable extends Doctrine_Table
   public function getSenderList($memberId)
   {
     $con = $this->getConnection();
-    $sql = 'select member_id from message_send_list where message_id in (select id from message where member_id = ?) and created_at in (select max(created_at) from message_send_list group by member_id) order by created_at desc';
-    $memberIdList = $con->fetchAll($sql, array($memberId));
 
-    $sql2 = 'select member_id from message where id in (select message_id from message_send_list where member_id = ?) and created_at in (select max(created_at) from message group by member_id) order by created_at desc';
-    $memberIdList2 = $con->fetchAll($sql2, array($memberId));
+    $query = 'SELECT DISTINCT msg_send.member_id FROM message msg '
+           . '  INNER JOIN message_send_list msg_send ON msg_send.message_id = msg.id '
+           . '  WHERE msg.member_id = :self_id '
+           . 'UNION '
+           . 'SELECT DISTINCT msg.member_id FROM message msg '
+           . '  INNER JOIN message_send_list msg_send ON msg_send.message_id = msg.id '
+           . '  WHERE msg_send.member_id = :self_id ';
 
-    $members = array();
-    $existIds = array();
-    foreach ($memberIdList as $id)
-    {
-      foreach ($memberIdList2 as $id2)
-      {
-        if (!in_array($id2, $existIds))
-        {
-          $members[] = Doctrine::getTable('Member')->find($id2);
-          $existIds[] = $id2;
-        }
-      }
+    $memberIds = $con->fetchColumn($query, array('self_id' => $memberId));
 
-      if (!in_array($id, $existIds))
-      {
-        $members[] = Doctrine::getTable('Member')->find($id);
-        $existIds[] = $id;
-      }
-    }
+    $memberQuery = Doctrine_Core::getTable('Member')->createQuery()
+      ->andWhereIn('id', $memberIds);
 
-    return $members;
+    $results = $memberQuery->execute();
+
+    $memberQuery->free();
+
+    return $results;
   }
 
   /** * メンバーとの最新のメッセージ
