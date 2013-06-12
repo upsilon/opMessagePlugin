@@ -194,65 +194,38 @@ class PluginSendMessageDataTable extends Doctrine_Table
     return $obj->getSendMessageData();
   }
 
-  /** * メッセージ送受信者一覧
-   * @param $member_id
-   * @return member object（の配列）
+  /**
+   * メンバーとやり取りしているメッセージの一覧
+   *
+   * @param $selfMemberId
+   * @return array
    */
-  public function getSenderList($memberId)
+  public function getMessageThreadsList($selfMemberId)
   {
     $con = $this->getConnection();
 
-    $query = 'SELECT DISTINCT msg_send.member_id FROM message msg '
+    $query = 'SELECT msg_send.member_id, msg.id AS message_id FROM message msg '
            . '  INNER JOIN message_send_list msg_send ON msg_send.message_id = msg.id '
            . '  WHERE msg.member_id = :self_id '
+           . '    AND msg.is_send = 1 '
            . 'UNION '
-           . 'SELECT DISTINCT msg.member_id FROM message msg '
+           . 'SELECT msg.member_id, msg.id AS message_id FROM message msg '
            . '  INNER JOIN message_send_list msg_send ON msg_send.message_id = msg.id '
-           . '  WHERE msg_send.member_id = :self_id ';
+           . '  WHERE msg_send.member_id = :self_id '
+           . '    AND msg.is_send = 1';
 
-    $memberIds = $con->fetchColumn($query, array('self_id' => $memberId));
+    $query = 'SELECT member_id, MAX(message_id) AS message_id FROM ('.$query.') GROUP BY member_id';
 
-    $memberQuery = Doctrine_Core::getTable('Member')->createQuery()
-      ->andWhereIn('id', $memberIds);
-
-    $results = $memberQuery->execute();
-
-    $memberQuery->free();
+    $results = array();
+    foreach ($con->fetchAll($query, array('self_id' => $selfMemberId)) as $row)
+    {
+      $results[] = (object)array(
+        'member' => Doctrine_Core::getTable('Member')->find($row['member_id']),
+        'message' => $this->find($row['message_id']),
+      );
+    }
 
     return $results;
-  }
-
-  /** * メンバーとの最新のメッセージ
-   * @param $memberId
-   * @return Message object
-   */
-  public function getLatestMemberMessage($memberId)
-  {
-    $myMemberId = sfContext::getInstance()->getUser()->getMemberId();
-
-    $con = $this->getConnection();
-    $sql = 'select * from message where id in (select message_id from message_send_list where member_id = ?) and member_id = ? order by created_at desc limit 1';
-    $message = $con->fetchAll($sql, array($memberId, $myMemberId));
-
-    $sql2 = 'select * from message where id in (select message_id from message_send_list where member_id = ?) and member_id = ? order by created_at desc limit 1';
-    $message2 = $con->fetchAll($sql2, array($myMemberId, $memberId));
-
-    $result = null;
-    if (0 < count($message))
-    {
-      $result = $message;
-    }
-    elseif (0 < count($message2))
-    {
-      $result = $message2;
-    }
-
-    if (0 < count($message) && 0 < count($message2) && $message[0]['created_at'] < $message2[0]['created_at'])
-    {
-      $result = $message2;
-    }
-
-    return $result;
   }
 
   /** * メンバーとのメッセージを25件取得

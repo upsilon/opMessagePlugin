@@ -181,6 +181,22 @@ abstract class PluginSendMessageData extends BaseSendMessageData
     return $instance->$methodName($this);
   }
 
+  public function isUnread($memberId)
+  {
+    $messageSend = Doctrine_Core::getTable('MessageSendList')
+      ->findOneByMessageIdAndMemberId($this->id, $memberId);
+
+    if (!$messageSend)
+    {
+      return false;
+    }
+
+    $isRead = $messageSend->is_read;
+    $messageSend->free(true);
+
+    return !$isRead;
+  }
+
   public function preUpdate($event)
   {
     if (in_array('is_send', $this->_modified) && 1 == $this->_data['is_send'])
