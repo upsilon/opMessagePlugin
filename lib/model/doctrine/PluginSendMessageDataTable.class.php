@@ -237,16 +237,17 @@ class PluginSendMessageDataTable extends Doctrine_Table
   {
     $myMemberId = sfContext::getInstance()->getUser()->getMemberId();
 
-    $q = $this->createQuery()
-      ->where('(member_id = ? OR member_id = ?)', array($memberId, $myMemberId))
-      ->andWhere('id in (SELECT m.message_id FROM MessageSendList m WHERE m.member_id = ? or m.member_id = ?)', array($memberId, $myMemberId));
+    $q = $this->createQuery('m')
+      ->innerJoin('m.MessageSendList m_send WITH m_send.member_id IN (?, ?)', array($memberId, $myMemberId))
+      ->andWhereIn('m.member_id', array($memberId, $myMemberId))
+      ->andWhere('m.is_send = true');
 
     if (0 <= $maxId)
     {
-      $q->andWhere('id < ?', $maxId);
+      $q->andWhere('m.id < ?', $maxId);
     }
 
-    return $q->orderBy('created_at desc')
+    return $q->orderBy('m.created_at desc')
       ->limit(25)
       ->execute();
   }
