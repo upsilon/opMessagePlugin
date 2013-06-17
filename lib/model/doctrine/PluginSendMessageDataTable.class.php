@@ -214,7 +214,7 @@ class PluginSendMessageDataTable extends Doctrine_Table
            . '  WHERE msg_send.member_id = :self_id '
            . '    AND msg.is_send = 1';
 
-    $query = 'SELECT member_id, MAX(message_id) AS message_id FROM ('.$query.') GROUP BY member_id';
+    $query = 'SELECT member_id, MAX(message_id) AS message_id FROM ('.$query.') AS subq GROUP BY member_id';
 
     $results = array();
     foreach ($con->fetchAll($query, array('self_id' => $selfMemberId)) as $row)
