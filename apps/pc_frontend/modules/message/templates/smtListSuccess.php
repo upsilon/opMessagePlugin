@@ -23,7 +23,7 @@
   </div>
   <div class="span7">
     <p><?php echo link_to($member->getName(), '@obj_member_profile?id='.$member->getId()) ?></p>
-    <p><?php echo link_to($message[0]['subject'], '@messageChain?id='.$member->getId().'#submit-wrapper') ?></p>
+    <p><?php echo link_to(mb_substr($message[0]['body'], 0, 25), '@messageChain?id='.$member->getId().'#submit-wrapper') ?></p>
   </div>
   <div class="span3">
     <p class="timeago" title="<?php echo $message[0]['created_at'] ?>"></p>
