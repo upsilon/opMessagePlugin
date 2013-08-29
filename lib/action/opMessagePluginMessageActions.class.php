@@ -112,8 +112,11 @@ class opMessagePluginMessageActions extends opMessagePluginActions
   */
   public function executeShow(sfWebRequest $request)
   {
-    $this->forwardIf($request->isSmartphone(), 'message', 'smtList');
     $this->message = Doctrine::getTable('SendMessageData')->find($request->getParameter('id'));
+    if ($request->isSmartphone())
+    {
+      $this->redirect(array('sf_route' => 'messageChain', 'id' => $this->message->member_id));
+    }
     $this->messageType = $request->getParameter('type');
     $this->forward404unless($message = $this->isReadable($this->messageType));
 
